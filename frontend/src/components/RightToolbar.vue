@@ -7,7 +7,6 @@ import SettingsDialog from './SettingsDialog.vue'
 import SwaggerImportDialog from './SwaggerImportDialog.vue'
 
 const workspace = useWorkspaceStore()
-const appVersion = 'v0.0.1'
 
 const varsDrawerVisible = ref(false)
 const settingsVisible = ref(false)
@@ -36,10 +35,6 @@ function openImport() {
       </button>
     </div>
 
-    <div class="toolbar-footer">
-      <span class="version-text">目前版本：{{ appVersion }}</span>
-    </div>
-
     <VariablesDrawer v-model="varsDrawerVisible" />
     <SettingsDialog v-model="settingsVisible" />
     <SwaggerImportDialog v-model="importVisible" />
@@ -52,7 +47,6 @@ function openImport() {
   flex-direction: column;
   align-items: center;
   padding-top: 8px;
-  height: 100%;
 }
 
 .toolbar-actions {
@@ -61,19 +55,6 @@ function openImport() {
   align-items: center;
   gap: 4px;
   padding-top: 8px;
-  flex: 1;
-}
-
-.toolbar-footer {
-  padding: 8px 0 12px;
-}
-
-.version-text {
-  font-size: 10px;
-  color: var(--app-text-secondary);
-  writing-mode: vertical-rl;
-  letter-spacing: 1px;
-  white-space: nowrap;
 }
 
 .tool-btn {
