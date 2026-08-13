@@ -79,10 +79,11 @@ export function useResizableColumns(options: UseResizableColumnsOptions) {
     lastContainerWidth = width
     if (width <= 0) {
       widths.value = [...options.defaultWidths]
-      observeContainer()
-      return
+    } else {
+      fitToWidth(width)
     }
-    fitToWidth(width)
+    // 始终注册 ResizeObserver，使容器宽度变化时能重新适配列宽
+    observeContainer()
   }
 
   /**

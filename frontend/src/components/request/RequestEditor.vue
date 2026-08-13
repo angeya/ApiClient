@@ -341,6 +341,8 @@ watch(() => workspace.activeTab?.rel, () => {
   nextTick(() => {
     suppressInitialSync = false
   })
+  // 每次打开接口时默认展示 Query 标签页
+  editorTab.value = 'params'
   loadDirMeta()
 }, { immediate: true })
 
@@ -425,13 +427,6 @@ watch(
     </div>
     <div v-else class="editor-body">
       <el-tabs v-model="editorTab" class="editor-tabs">
-        <el-tab-pane name="params">
-          <template #label>
-            <span>Query</span>
-            <span v-if="queryCount > 0" class="tab-count">{{ queryCount }}</span>
-          </template>
-          <KeyValueEditor :model-value="draft.query" @update:model-value="update({ query: $event })" />
-        </el-tab-pane>
         <el-tab-pane name="headers">
           <template #label>
             <span>Headers</span>
@@ -443,6 +438,13 @@ watch(
             @update:model-value="update({ headers: $event })"
             @toggle-inherited="toggleInheritedHeader"
           />
+        </el-tab-pane>
+        <el-tab-pane name="params">
+          <template #label>
+            <span>Query</span>
+            <span v-if="queryCount > 0" class="tab-count">{{ queryCount }}</span>
+          </template>
+          <KeyValueEditor :model-value="draft.query" @update:model-value="update({ query: $event })" />
         </el-tab-pane>
         <el-tab-pane name="body">
           <template #label>
@@ -475,11 +477,19 @@ watch(
           <div v-if="previewLoading" class="preview-loading">正在解析...</div>
           <div v-else-if="preview" class="preview-panel">
             <div class="preview-section">
-              <div class="preview-label">解析后的 URL</div>
+              <div class="preview-title">解析后的 URL</div>
               <div class="preview-value">{{ preview.url || '-' }}</div>
             </div>
             <div class="preview-section">
-              <div class="preview-label">Query 参数</div>
+              <div class="preview-title">Headers（含全局/目录继承）</div>
+              <div v-for="(h, idx) in preview.headers || []" :key="idx" class="preview-row">
+                <span class="preview-key">{{ h.key }}</span>
+                <span class="preview-val">{{ h.value }}</span>
+              </div>
+              <div v-if="!(preview.headers || []).length" class="preview-empty">无</div>
+            </div>
+            <div class="preview-section">
+              <div class="preview-title">Query 参数</div>
               <div v-for="(q, idx) in preview.query || []" :key="idx" class="preview-row">
                 <span class="preview-key">{{ q.key }}</span>
                 <span class="preview-val">{{ q.value }}</span>
@@ -487,7 +497,7 @@ watch(
               <div v-if="!(preview.query || []).length" class="preview-empty">无</div>
             </div>
             <div class="preview-section">
-              <div class="preview-label">Body 内容</div>
+              <div class="preview-title">Body 内容</div>
               <div v-if="preview.bodyType === 'none' || preview.bodyType === ''" class="preview-empty">无 Body</div>
               <div v-else-if="preview.bodyType === 'form-data'" class="preview-body">
                 <div class="preview-meta">Content-Type: {{ preview.contentType || 'multipart/form-data' }}</div>
@@ -505,14 +515,6 @@ watch(
                 <div class="preview-meta">Content-Type: {{ preview.contentType || preview.bodyType }}</div>
                 <pre class="preview-code">{{ preview.body || '无' }}</pre>
               </div>
-            </div>
-            <div class="preview-section">
-              <div class="preview-label">合并后的 Headers（含全局/目录继承）</div>
-              <div v-for="(h, idx) in preview.headers || []" :key="idx" class="preview-row">
-                <span class="preview-key">{{ h.key }}</span>
-                <span class="preview-val">{{ h.value }}</span>
-              </div>
-              <div v-if="!(preview.headers || []).length" class="preview-empty">无</div>
             </div>
           </div>
         </el-tab-pane>
@@ -597,12 +599,25 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.preview-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--app-text-secondary);
+.preview-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--app-text);
+  background-color: var(--app-bg-secondary);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.preview-section .preview-value,
+.preview-section .preview-row,
+.preview-section .preview-empty,
+.preview-section .preview-body {
+  padding: 4px 10px;
 }
 
 .preview-value {
