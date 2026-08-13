@@ -97,8 +97,7 @@ async function doClose(saveDirty: boolean) {
 
 onMounted(async () => {
   try {
-    const defaultPath = await api.getDefaultWorkspaceRoot()
-    await workspace.openWorkspace(defaultPath)
+    await workspace.initApp()
     theme.initTheme(workspace.settings.theme)
     EventsOn('clipboard:fetch', (code: string) => {
       fetchCode.value = code
@@ -176,6 +175,7 @@ onMounted(async () => {
       <RightToolbar class="right-toolbar" />
     </div>
     <FetchImportDialog v-model="fetchVisible" :initial-code="fetchCode" />
+    <span class="version-badge">v0.0.1</span>
   </div>
 </template>
 
@@ -194,6 +194,18 @@ onMounted(async () => {
   flex-direction: column;
   height: 100%;
   position: relative;
+}
+
+.version-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-size: 10px;
+  color: var(--app-text-secondary);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+  z-index: 9999;
 }
 
 .app-body {

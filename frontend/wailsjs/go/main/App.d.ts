@@ -28,6 +28,8 @@ export function GetWorkspaceRoot():Promise<string>;
 
 export function ImportRequest(arg1:string,arg2:Array<number>):Promise<string>;
 
+export function InitApp():Promise<models.WorkspaceInitData>;
+
 export function LoadDirMeta(arg1:string):Promise<models.DirMeta>;
 
 export function LoadRequest(arg1:string):Promise<models.Request>;

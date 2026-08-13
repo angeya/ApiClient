@@ -54,6 +54,10 @@ export function ImportRequest(arg1, arg2) {
   return window['go']['main']['App']['ImportRequest'](arg1, arg2);
 }
 
+export function InitApp() {
+  return window['go']['main']['App']['InitApp']();
+}
+
 export function LoadDirMeta(arg1) {
   return window['go']['main']['App']['LoadDirMeta'](arg1);
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"ApiClient/internal/models"
 
@@ -91,41 +92,75 @@ func (m *Manager) loadTreeDir(dir string, rel string) ([]models.ApiNode, error) 
 		}
 		return entries[i].Name() < entries[j].Name()
 	})
-	var nodes []models.ApiNode
+
+	// 预过滤有效条目，保持索引顺序
+	type validEntry struct {
+		name      string
+		childRel  string
+		childPath string
+		isDir     bool
+	}
+	var valid []validEntry
 	for _, entry := range entries {
 		name := entry.Name()
 		if name == settingsDir || strings.HasPrefix(name, ".") || name == dirMetaFile {
 			continue
 		}
-		childRel := filepath.Join(rel, name)
-		childPath := filepath.Join(dir, name)
-		if entry.IsDir() {
-			children, err := m.loadTreeDir(childPath, childRel)
-			if err != nil {
-				return nil, err
+		if !entry.IsDir() && filepath.Ext(name) != ".json" {
+			continue
+		}
+		valid = append(valid, validEntry{
+			name:      name,
+			childRel:  filepath.Join(rel, name),
+			childPath: filepath.Join(dir, name),
+			isDir:     entry.IsDir(),
+		})
+	}
+	if len(valid) == 0 {
+		return nil, nil
+	}
+
+	// 并行加载各条目数据，按索引收集以保持排序顺序
+	results := make([]models.ApiNode, len(valid))
+	var wg sync.WaitGroup
+	for i, ve := range valid {
+		wg.Add(1)
+		go func(idx int, e validEntry) {
+			defer wg.Done()
+			if e.isDir {
+				children, _ := m.loadTreeDir(e.childPath, e.childRel)
+				meta, _ := m.LoadDirMeta(e.childRel)
+				results[idx] = models.ApiNode{
+					ID:       meta.ID,
+					Type:     "dir",
+					Name:     e.name,
+					Path:     e.childRel,
+					Children: children,
+				}
+			} else {
+				req, err := m.LoadRequest(e.childRel)
+				if err != nil {
+					return
+				}
+				results[idx] = models.ApiNode{
+					ID:          req.ID,
+					Type:        "request",
+					Name:        req.Name,
+					Method:      req.Method,
+					RequestType: req.Type,
+					Path:        e.childRel,
+					URL:         req.URL,
+				}
 			}
-			meta, _ := m.LoadDirMeta(childRel)
-			nodes = append(nodes, models.ApiNode{
-				ID:       meta.ID,
-				Type:     "dir",
-				Name:     name,
-				Path:     childRel,
-				Children: children,
-			})
-		} else if filepath.Ext(name) == ".json" {
-			req, err := m.LoadRequest(childRel)
-			if err != nil {
-				continue
-			}
-			nodes = append(nodes, models.ApiNode{
-				ID:          req.ID,
-				Type:        "request",
-				Name:        req.Name,
-				Method:      req.Method,
-				RequestType: req.Type,
-				Path:        childRel,
-				URL:         req.URL,
-			})
+		}(i, ve)
+	}
+	wg.Wait()
+
+	// 过滤掉未填充的零值节点（加载失败的条目）
+	nodes := make([]models.ApiNode, 0, len(valid))
+	for _, n := range results {
+		if n.Type != "" {
+			nodes = append(nodes, n)
 		}
 	}
 	return nodes, nil

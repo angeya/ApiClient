@@ -129,6 +129,28 @@ func (a *App) GetWorkspaceRoot() string {
 	return a.workspaceRoot
 }
 
+// InitApp opens the default workspace and returns root, settings, and tree in one call,
+// eliminating multiple IPC round-trips during startup.
+func (a *App) InitApp() (models.WorkspaceInitData, error) {
+	root := a.GetDefaultWorkspaceRoot()
+	if err := a.OpenWorkspace(root); err != nil {
+		return models.WorkspaceInitData{}, err
+	}
+	settings, err := a.workspace.LoadSettings()
+	if err != nil {
+		return models.WorkspaceInitData{}, err
+	}
+	tree, err := a.workspace.LoadTree()
+	if err != nil {
+		return models.WorkspaceInitData{}, err
+	}
+	return models.WorkspaceInitData{
+		Root:     root,
+		Settings: settings,
+		Tree:     tree,
+	}, nil
+}
+
 // PickWorkspaceDir opens a native directory picker for workspace selection.
 func (a *App) PickWorkspaceDir() (string, error) {
 	if a.ctx == nil {

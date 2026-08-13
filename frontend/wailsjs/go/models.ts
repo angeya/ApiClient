@@ -422,6 +422,40 @@ export namespace models {
 		}
 	}
 	
+	export class WorkspaceInitData {
+	    root: string;
+	    settings: Settings;
+	    tree: ApiNode[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceInitData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.root = source["root"];
+	        this.settings = this.convertValues(source["settings"], Settings);
+	        this.tree = this.convertValues(source["tree"], ApiNode);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class WorkspaceMigrationResult {
 	    sourcePath: string;
 	    targetPath: string;

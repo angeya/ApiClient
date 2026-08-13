@@ -12,7 +12,6 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 const workspace = useWorkspaceStore()
 const theme = useThemeStore()
 
-const appVersion = 'v0.0.1'
 const form = ref<Settings>({ ...workspace.settings })
 const workspacePath = ref('')
 const saving = ref(false)
@@ -178,8 +177,6 @@ function close() {
       </el-form-item>
     </el-form>
 
-    <div class="version-info">目前版本：{{ appVersion }}</div>
-
     <template #footer>
       <el-button @click="close">取消</el-button>
       <el-button type="primary" :loading="saving" @click="save">保存</el-button>
@@ -264,15 +261,6 @@ function close() {
   display: flex;
   width: 100%;
   gap: 8px;
-}
-
-.version-info {
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--app-border);
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  text-align: right;
 }
 
 .migration-dialog :deep(.el-dialog__body) {

@@ -68,6 +68,13 @@ type Settings struct {
 	GlobalVariables  []Variable `json:"globalVariables"`
 }
 
+// WorkspaceInitData bundles workspace root, settings, and tree for one-shot startup loading.
+type WorkspaceInitData struct {
+	Root     string    `json:"root"`
+	Settings Settings  `json:"settings"`
+	Tree     []ApiNode `json:"tree"`
+}
+
 // WorkspaceMigrationResult summarizes a workspace path change.
 type WorkspaceMigrationResult struct {
 	SourcePath     string   `json:"sourcePath"`

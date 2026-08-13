@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../services/api'
+import type { WorkspaceInitData } from '../services/api'
 import { normalizeRequest } from '../utils/helpers'
 import type { ApiNode, Request, Settings } from '../types'
 import type { RequestTab } from '../types'
@@ -60,6 +61,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     const s = await api.loadSettings()
     settings.value = normalizeSettings(s as Settings)
     await reloadTree()
+  }
+
+  /** 启动时一次性加载工作区、设置和树，减少 IPC 往返 */
+  async function initApp() {
+    const data = await api.initApp() as WorkspaceInitData
+    root.value = data.root
+    settings.value = normalizeSettings(data.settings as unknown as Settings)
+    tree.value = (data.tree as ApiNode[]) || []
   }
 
   async function changeWorkspace(path: string) {
@@ -341,6 +350,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     activeTab,
     activeDraft,
     openWorkspace,
+    initApp,
     changeWorkspace,
     reloadTree,
     saveSettings,

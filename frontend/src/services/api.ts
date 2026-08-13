@@ -2,6 +2,7 @@ import {
   OpenWorkspace,
   GetDefaultWorkspaceRoot,
   GetWorkspaceRoot,
+  InitApp,
   LoadTree,
   LoadSettings,
   SaveSettings,
@@ -37,11 +38,13 @@ import {
 import type { models } from '../../wailsjs/go/models'
 
 export type HttpResponse = models.HttpResponse
+export type WorkspaceInitData = models.WorkspaceInitData
 
 export const api = {
   openWorkspace: OpenWorkspace,
   getDefaultWorkspaceRoot: GetDefaultWorkspaceRoot,
   getWorkspaceRoot: GetWorkspaceRoot,
+  initApp: InitApp,
   loadTree: LoadTree,
   loadSettings: LoadSettings,
   saveSettings: SaveSettings,
