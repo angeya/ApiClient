@@ -1,0 +1,42 @@
+# ===== 构建产物 =====
+/frontend/dist/
+/build/bin/
+
+# ===== 依赖 =====
+node_modules/
+**/node_modules/
+
+# ===== Go 编译产物 =====
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# ===== Wails 运行时生成的工作区配置 =====
+.apiclient/
+**/.apiclient/
+
+# ===== 日志 =====
+*.log
+/.log/
+**/.log/
+
+# ===== 测试输出 =====
+/fetch_test_out.json
+
+# ===== 临时目录 =====
+/temp_init/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.trae/
+*.swp
+*.swo
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini

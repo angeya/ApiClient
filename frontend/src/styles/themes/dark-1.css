@@ -1,0 +1,43 @@
+:root[data-theme='dark-1'] {
+  --app-bg: #1e1e1e;
+  --app-bg-secondary: #252526;
+  --app-bg-tertiary: #2d2d30;
+  --app-bg-overlay: rgba(30, 30, 30, 0.7);
+  --app-text: #d4d4d4;
+  --app-text-secondary: #a0a0a0;
+  --app-border: #3e3e42;
+  --app-accent: #5ee7cb;
+  --app-accent-hover: #4ad3b8;
+  --app-danger: #ff6659;
+  --app-success: #66dd6a;
+  --app-warning: #ffad33;
+  --el-bg-color: #1e1e1e;
+  --el-bg-color-page: #252526;
+  --el-bg-color-overlay: #2d2d30;
+  --el-text-color-primary: #d4d4d4;
+  --el-text-color-regular: #d4d4d4;
+  --el-text-color-secondary: #a0a0a0;
+  --el-border-color: #3e3e42;
+  --el-border-color-light: #3e3e42;
+  --el-fill-color: #2d2d30;
+  --el-fill-color-light: #3e3e42;
+  --el-fill-color-blank: #1e1e1e;
+  --el-color-primary: var(--app-accent);
+  --el-color-success: var(--app-success);
+  --el-color-danger: var(--app-danger);
+  --el-color-warning: var(--app-warning);
+
+  --tok-key: #d6aaff;
+  --tok-string: #d9f7a3;
+  --tok-num: #ffab91;
+  --tok-bool: #ffb8c1;
+
+  --method-get: #7ab8ff;
+  --method-post: #6ee7b0;
+  --method-put: #ffb84d;
+  --method-delete: #ff6659;
+  --method-patch: #76f5d8;
+  --method-head: #b46bff;
+  --method-options: #b46bff;
+  --method-ws: #a78bfa;
+}

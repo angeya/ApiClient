@@ -1,0 +1,39 @@
+:root[data-theme='warm'] {
+  --app-bg: #f5f0e8;
+  --app-bg-secondary: #efe9dd;
+  --app-bg-tertiary: #e6decf;
+  --app-bg-overlay: rgba(245, 240, 232, 0.7);
+  --app-text: #3e3a36;
+  --app-text-secondary: #6b6560;
+  --app-border: #d6cfc3;
+  --app-accent: #d97706;
+  --app-accent-hover: #b45309;
+  --app-danger: #dc2626;
+  --app-success: #16a34a;
+  --app-warning: #ca8a04;
+  --el-bg-color: #f5f0e8;
+  --el-bg-color-page: #efe9dd;
+  --el-bg-color-overlay: #e6decf;
+  --el-text-color-primary: #3e3a36;
+  --el-text-color-regular: #3e3a36;
+  --el-text-color-secondary: #6b6560;
+  --el-border-color: #d6cfc3;
+  --el-border-color-light: #d6cfc3;
+  --el-fill-color: #e6decf;
+  --el-fill-color-light: #d6cfc3;
+  --el-fill-color-blank: #f5f0e8;
+
+  --tok-key: #7c3aed;
+  --tok-string: #059669;
+  --tok-num: #c2410c;
+  --tok-bool: #be185d;
+
+  --method-get: #61affe;
+  --method-post: #49cc90;
+  --method-put: #fca130;
+  --method-delete: #f93e3e;
+  --method-patch: #50e3c2;
+  --method-head: #9012fe;
+  --method-options: #9012fe;
+  --method-ws: #8b5cf6;
+}
