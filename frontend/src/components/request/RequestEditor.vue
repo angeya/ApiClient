@@ -591,14 +591,13 @@ watch(
 .preview-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 4px;
+  gap: 5px;
+  padding: 12px 4px 4px;
 }
 
 .preview-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   border: 1px solid var(--app-border);
   border-radius: 4px;
   overflow: hidden;
@@ -617,7 +616,16 @@ watch(
 .preview-section .preview-row,
 .preview-section .preview-empty,
 .preview-section .preview-body {
-  padding: 4px 10px;
+  padding: 3px 10px;
+}
+
+.preview-section .preview-value:last-child,
+.preview-section .preview-row:last-child,
+.preview-section .preview-empty:last-child,
+.preview-section .preview-body:last-child,
+.preview-section > .preview-value:only-child,
+.preview-section > .preview-empty:only-child {
+  padding-bottom: 8px;
 }
 
 .preview-value {
