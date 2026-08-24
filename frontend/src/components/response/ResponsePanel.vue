@@ -13,6 +13,12 @@ import {
 } from '../../utils/helpers'
 import CodeEditor from '../common/CodeEditor.vue'
 
+const codeEditorRef = ref<InstanceType<typeof CodeEditor> | null>(null)
+
+function toggleSearch() {
+  codeEditorRef.value?.openSearch()
+}
+
 interface ScriptResult {
   success: boolean
   error?: string
@@ -231,6 +237,11 @@ async function downloadResponseBody() {
         <el-tab-pane label="响应内容" name="body">
           <div v-if="response && formattedBody" class="response-body-wrap">
             <div class="response-body-toolbar">
+              <el-tooltip content="搜索" placement="top">
+                <el-button size="small" text @click="toggleSearch">
+                  <el-icon><Search /></el-icon>
+                </el-button>
+              </el-tooltip>
               <el-tooltip content="复制响应内容" placement="top">
                 <el-button size="small" text @click="copyResponseBody">
                   <el-icon><CopyDocument /></el-icon>
@@ -244,6 +255,7 @@ async function downloadResponseBody() {
             </div>
             <div class="response-body-content">
               <CodeEditor
+                ref="codeEditorRef"
                 :model-value="formattedBody"
                 read-only
                 :language="bodyLanguage"
