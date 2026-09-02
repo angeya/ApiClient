@@ -238,6 +238,13 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         tabs.value.splice(i, 1, { ...t, rel: t.rel.replace(rel, newRel) })
       }
     }
+    // 请求重命名时同步更新对应草稿的名称，否则保存时会把旧的“未命名”写回文件，导致左侧树名被还原
+    if (!isDir) {
+      const draft = drafts.value.get(rel)
+      if (draft) {
+        drafts.value.set(rel, { ...draft, name: newName })
+      }
+    }
     updateTreeNodeAfterRename(rel, newRel, newName, isDir)
     await reloadTree()
   }

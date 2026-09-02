@@ -603,18 +603,40 @@ function renderMenu(node: ApiNode) {
 }
 
 .tree :deep(.el-tree-node__content.locate-flash) {
-  animation: locate-flash 1.5s ease;
+  animation: locate-flash 1.3s ease;
 }
 
 @keyframes locate-flash {
   0%,
   100% {
     background-color: transparent;
+    color: var(--app-text);
+    box-shadow: none;
   }
-  30%,
-  70% {
-    background-color: var(--app-accent);
+  20% {
+    background-color: color-mix(in srgb, var(--app-accent) 88%, #000);
     color: #fff;
+    box-shadow: inset 0 0 0 1.5px var(--app-accent);
+  }
+  30% {
+    background-color: transparent;
+    color: var(--app-text);
+    box-shadow: none;
+  }
+  53% {
+    background-color: color-mix(in srgb, var(--app-accent) 88%, #000);
+    color: #fff;
+    box-shadow: inset 0 0 0 1.5px var(--app-accent);
+  }
+  63% {
+    background-color: transparent;
+    color: var(--app-text);
+    box-shadow: none;
+  }
+  86% {
+    background-color: color-mix(in srgb, var(--app-accent) 88%, #000);
+    color: #fff;
+    box-shadow: inset 0 0 0 1.5px var(--app-accent);
   }
 }
 
