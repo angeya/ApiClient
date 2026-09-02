@@ -82,9 +82,10 @@ function onInheritedToggle(row: Row, enabled: boolean | string | number) {
 watch(
   () => props.modelValue,
   (list) => {
-    // 直接向数组追加空行，避免通过 emit 触发 update:modelValue 导致误标记 dirty
-    if (list && list.length === 0) {
-      list.push({ key: '', value: '', enabled: false, description: '' })
+    // 直接向数组追加空行，避免通过 emit 触发 update:modelValue 导致误标记 dirty。
+    // 无论列表为空还是末行已有内容，都保证末尾始终预留一个空行供新增填写。
+    if (list) {
+      ensureEmptyRow()
     }
   },
   { immediate: true }

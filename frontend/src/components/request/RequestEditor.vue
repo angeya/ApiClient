@@ -18,8 +18,6 @@ const preview = ref<models.RequestPreview | null>(null)
 const previewLoading = ref(false)
 const dirMeta = ref<DirMeta | null>(null)
 
-let currentRequestId = ''
-
 // WebSocket 连接状态
 const wsConnecting = ref(false)
 
@@ -210,7 +208,6 @@ async function send() {
   const req = plainDraft()
   if (!tab || !req) return
   req.url = normalizeUrl(req.url, req.type, req.method)
-  currentRequestId = req.id
   workspace.startSendingTimer(req.id)
   try {
     const dirRel = currentDirRel(tab.rel)
@@ -219,17 +216,8 @@ async function send() {
   } catch (err) {
     ElMessage.error(`请求失败: ${err}`)
   } finally {
+    // 无论成功、失败或取消，都必须清除发送中状态，确保遮罩/加载态能正常消失
     workspace.stopSendingTimer()
-  }
-}
-
-async function cancelSend() {
-  if (!currentRequestId) return
-  try {
-    await api.cancelRequest(currentRequestId)
-    ElMessage.info('请求已取消')
-  } catch (err) {
-    ElMessage.error(`取消失败: ${err}`)
   }
 }
 
@@ -411,12 +399,8 @@ watch(
           <el-button v-else type="danger" @click="disconnectWebSocket">断开</el-button>
         </template>
         <template v-else>
-          <template v-if="!workspace.sending">
-            <el-button type="primary" @click="send">发送</el-button>
-          </template>
-          <template v-else>
-            <el-button type="danger" size="small" @click="cancelSend">取消</el-button>
-          </template>
+          <!-- 发送按钮保持“发送”不变，请求期间仅通过 loading/disabled 变为不可点击，取消操作由响应面板遮罩中的取消按钮完成 -->
+          <el-button type="primary" :loading="workspace.sending" @click="send">发送</el-button>
         </template>
         <el-button @click="save">保存</el-button>
       </div>
