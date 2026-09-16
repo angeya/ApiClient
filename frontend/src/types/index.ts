@@ -56,6 +56,8 @@ export interface Settings {
   version: string
   theme: string
   requestTimeoutMs: number
+  /** 响应内容渲染上限（字节），超过该上限时不渲染正文，仅提示下载浏览 */
+  responseRenderLimitBytes: number
   globalHeaders: Header[]
   globalVariables: Variable[]
 }

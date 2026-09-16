@@ -1,5 +1,11 @@
 import type { Header, QueryParam, Variable, Request } from '../types'
 
+/** 请求默认超时时间（毫秒） */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 30000
+
+/** 响应内容默认渲染上限（字节），默认 10MB */
+export const DEFAULT_RESPONSE_RENDER_LIMIT_BYTES = 10 * 1024 * 1024
+
 export function emptyHeader(): Header {
   return { key: '', value: '', enabled: true, description: '' }
 }
@@ -32,6 +38,106 @@ export function tryFormatJson(input: string): string {
   } catch {
     return input
   }
+}
+
+/**
+ * 以字符流扫描的方式为 JSON 文本添加缩进，不构建对象图。
+ * JSON.parse + JSON.stringify 在处理数 MB 的响应时会生成庞大的中间对象，
+ * 是本项目响应区卡死/OOM 的主要原因，因此大响应改用该实现。
+ * 遇到明显不合法的结构（字符串未闭合、括号不匹配）时返回 null，由调用方回退为原文。
+ */
+export function prettyPrintJson(input: string, indentSize = 2): string | null {
+  const indentUnit = ' '.repeat(Math.max(0, indentSize))
+  const out: string[] = []
+  const n = input.length
+  let depth = 0
+  let i = 0
+
+  while (i < n) {
+    const ch = input[i]
+
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      i++
+      continue
+    }
+
+    // 字符串：整段拷贝，避免破坏其中的转义与空格
+    if (ch === '"') {
+      const start = i
+      i++
+      let closed = false
+      while (i < n) {
+        const c = input[i]
+        if (c === '\\') {
+          i += 2
+          continue
+        }
+        if (c === '"') {
+          closed = true
+          i++
+          break
+        }
+        i++
+      }
+      if (!closed) return null
+      out.push(input.slice(start, i))
+      continue
+    }
+
+    if (ch === '{' || ch === '[') {
+      const close = ch === '{' ? '}' : ']'
+      let j = i + 1
+      while (j < n && (input[j] === ' ' || input[j] === '\t' || input[j] === '\n' || input[j] === '\r')) {
+        j++
+      }
+      // 空对象/空数组保持紧凑形式，避免出现只有换行的空块
+      if (input[j] === close) {
+        out.push(ch, close)
+        i = j + 1
+        continue
+      }
+      depth++
+      out.push(ch, '\n', indentUnit.repeat(depth))
+      i++
+      continue
+    }
+
+    if (ch === '}' || ch === ']') {
+      depth--
+      if (depth < 0) return null
+      out.push('\n', indentUnit.repeat(depth), ch)
+      i++
+      continue
+    }
+
+    if (ch === ',') {
+      out.push(',', '\n', indentUnit.repeat(depth))
+      i++
+      continue
+    }
+
+    if (ch === ':') {
+      out.push(': ')
+      i++
+      continue
+    }
+
+    // 数字、true、false、null 等字面量
+    const start = i
+    while (i < n) {
+      const c = input[i]
+      if (c === ',' || c === '}' || c === ']' || c === ' ' || c === '\t' || c === '\n' || c === '\r') break
+      i++
+    }
+    out.push(input.slice(start, i))
+  }
+
+  return depth === 0 ? out.join('') : null
+}
+
+/** 安全格式化 JSON：失败时回退为原文 */
+export function safeFormatJson(input: string, indentSize = 2): string {
+  return prettyPrintJson(input, indentSize) ?? input
 }
 
 export function normalizeRequest(req: any): Request {

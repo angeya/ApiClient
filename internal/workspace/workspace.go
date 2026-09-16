@@ -19,6 +19,13 @@ const settingsDir = ".apiclient"
 const settingsFile = "settings.json"
 const dirMetaFile = "_dir.meta.json"
 
+// DefaultRequestTimeoutMs 请求默认超时时间（毫秒）。
+const DefaultRequestTimeoutMs = 30000
+
+// DefaultResponseRenderLimitBytes 响应内容默认渲染上限（10MB）。
+// 超过该上限时前端不渲染响应正文，只提示下载后浏览。
+const DefaultResponseRenderLimitBytes = int64(10 * 1024 * 1024)
+
 // Manager handles workspace file IO.
 type Manager struct {
 	root string
@@ -42,11 +49,12 @@ func (m *Manager) EnsureWorkspace() error {
 	settingsPath := filepath.Join(m.root, settingsDir, settingsFile)
 	if _, err := os.Stat(settingsPath); os.IsNotExist(err) {
 		settings := models.Settings{
-			Version:          "1.0.0",
-			Theme:            "dark-1",
-			RequestTimeoutMs: 30000,
-			GlobalHeaders:    []models.Header{},
-			GlobalVariables:  []models.Variable{},
+			Version:                  "1.0.0",
+			Theme:                    "dark-1",
+			RequestTimeoutMs:         DefaultRequestTimeoutMs,
+			ResponseRenderLimitBytes: DefaultResponseRenderLimitBytes,
+			GlobalHeaders:            []models.Header{},
+			GlobalVariables:          []models.Variable{},
 		}
 		if err := m.SaveSettings(settings); err != nil {
 			return err
@@ -62,12 +70,33 @@ func (m *Manager) LoadSettings() (models.Settings, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return models.Settings{Version: "1.0.0", Theme: "dark-1", RequestTimeoutMs: 30000}, nil
+			return defaultSettings(), nil
 		}
 		return s, err
 	}
-	err = json.Unmarshal(data, &s)
-	return s, err
+	if err = json.Unmarshal(data, &s); err != nil {
+		return s, err
+	}
+	// 兼容旧版 settings.json：缺失或非法的配置项回落到默认值
+	if s.RequestTimeoutMs <= 0 {
+		s.RequestTimeoutMs = DefaultRequestTimeoutMs
+	}
+	if s.ResponseRenderLimitBytes <= 0 {
+		s.ResponseRenderLimitBytes = DefaultResponseRenderLimitBytes
+	}
+	return s, nil
+}
+
+// defaultSettings 返回一份包含全部默认值的设置，避免各处重复字面量。
+func defaultSettings() models.Settings {
+	return models.Settings{
+		Version:                  "1.0.0",
+		Theme:                    "dark-1",
+		RequestTimeoutMs:         DefaultRequestTimeoutMs,
+		ResponseRenderLimitBytes: DefaultResponseRenderLimitBytes,
+		GlobalHeaders:            []models.Header{},
+		GlobalVariables:          []models.Variable{},
+	}
 }
 
 // SaveSettings saves global settings.

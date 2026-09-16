@@ -2,14 +2,20 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../services/api'
 import type { WorkspaceInitData } from '../services/api'
-import { normalizeRequest } from '../utils/helpers'
+import {
+  normalizeRequest,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
+} from '../utils/helpers'
 import type { ApiNode, Request, Settings } from '../types'
 import type { RequestTab } from '../types'
 
 function normalizeSettings(s: Settings): Settings {
   return {
     ...s,
-    requestTimeoutMs: s.requestTimeoutMs > 0 ? s.requestTimeoutMs : 30000,
+    requestTimeoutMs: s.requestTimeoutMs > 0 ? s.requestTimeoutMs : DEFAULT_REQUEST_TIMEOUT_MS,
+    responseRenderLimitBytes:
+      s.responseRenderLimitBytes > 0 ? s.responseRenderLimitBytes : DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
     globalHeaders: s.globalHeaders || [],
     globalVariables: s.globalVariables || [],
   }
@@ -21,7 +27,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const settings = ref<Settings>({
     version: '1.0.0',
     theme: 'dark-1',
-    requestTimeoutMs: 30000,
+    requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+    responseRenderLimitBytes: DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
     globalHeaders: [],
     globalVariables: [],
   })

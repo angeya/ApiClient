@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useWorkspaceStore } from '../stores/workspace'
 import { useThemeStore, type Theme } from '../stores/theme'
@@ -44,6 +44,19 @@ function timeoutSeconds(ms: number): number {
 function toMs(seconds: number): number {
   return Math.max(1, Math.round(seconds)) * 1000
 }
+
+const BYTES_PER_MB = 1024 * 1024
+
+/**
+ * 响应渲染上限在界面上以 MB 为单位编辑，底层设置仍以字节存储。
+ */
+const renderLimitMb = computed({
+  get: () => Math.max(1, Math.round((form.value.responseRenderLimitBytes || 0) / BYTES_PER_MB)),
+  set: (mb: number) => {
+    const value = Number.isFinite(mb) ? mb : 1
+    form.value.responseRenderLimitBytes = Math.max(1, Math.round(value)) * BYTES_PER_MB
+  },
+})
 
 async function chooseWorkspace() {
   try {
@@ -169,6 +182,23 @@ function close() {
         <span class="unit">毫秒</span>
       </el-form-item>
 
+      <el-form-item label="渲染上限">
+        <el-input-number
+          v-model="renderLimitMb"
+          :min="1"
+          :max="1024"
+          :step="1"
+          controls-position="right"
+        />
+        <span class="unit">MB</span>
+        <el-tooltip
+          content="响应内容超过该大小时不再渲染正文，需下载响应内容后浏览"
+          placement="top"
+        >
+          <el-icon class="hint-icon"><QuestionFilled /></el-icon>
+        </el-tooltip>
+      </el-form-item>
+
       <el-form-item label="工作区">
         <div class="workspace-row">
           <el-input v-model="workspacePath" readonly />
@@ -255,6 +285,13 @@ function close() {
   margin-left: 8px;
   font-size: 13px;
   color: var(--app-text-secondary);
+}
+
+.hint-icon {
+  margin-left: 6px;
+  font-size: 14px;
+  color: var(--app-text-secondary);
+  cursor: help;
 }
 
 .workspace-row {

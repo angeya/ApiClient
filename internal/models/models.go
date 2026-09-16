@@ -61,11 +61,14 @@ type DirMeta struct {
 
 // Settings represents global application settings.
 type Settings struct {
-	Version          string     `json:"version"`
-	Theme            string     `json:"theme"`
-	RequestTimeoutMs int        `json:"requestTimeoutMs"`
-	GlobalHeaders    []Header   `json:"globalHeaders"`
-	GlobalVariables  []Variable `json:"globalVariables"`
+	Version          string `json:"version"`
+	Theme            string `json:"theme"`
+	RequestTimeoutMs int    `json:"requestTimeoutMs"`
+	// ResponseRenderLimitBytes 响应内容渲染上限（字节）。
+	// 响应体超过该上限时前端不再渲染正文，只提示用户下载后浏览，避免大响应导致界面卡死。
+	ResponseRenderLimitBytes int64      `json:"responseRenderLimitBytes"`
+	GlobalHeaders            []Header   `json:"globalHeaders"`
+	GlobalVariables          []Variable `json:"globalVariables"`
 }
 
 // WorkspaceInitData bundles workspace root, settings, and tree for one-shot startup loading.

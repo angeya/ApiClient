@@ -5,11 +5,12 @@ import { useWorkspaceStore } from '../../stores/workspace'
 import type { HttpResponse } from '../../services/api'
 import { api, responseBodyToString } from '../../services/api'
 import {
-  tryFormatJson,
+  prettyPrintJson,
   formatBytes,
   getExtensionFromContentType,
   parseFilenameFromHeaders,
   generateRandomFilename,
+  DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
 } from '../../utils/helpers'
 import CodeEditor from '../common/CodeEditor.vue'
 
@@ -136,14 +137,55 @@ onUnmounted(() => {
   window.removeEventListener('api-response', onResponse)
 })
 
-const formattedBody = computed(() => {
+/** 响应内容渲染上限（字节），超过后不再渲染正文，避免界面卡死 */
+const renderLimitBytes = computed(
+  () => workspace.settings.responseRenderLimitBytes || DEFAULT_RESPONSE_RENDER_LIMIT_BYTES
+)
+
+/** 响应原始文本，仅在确实需要渲染或下载时才解码 */
+const rawBodyText = computed(() => {
   if (!response.value) return ''
-  const text = responseBodyToString(response.value.body)
-  if (response.value.contentType?.includes('application/json')) {
-    return tryFormatJson(text)
-  }
-  return text
+  return responseBodyToString(response.value.body)
 })
+
+/**
+ * 响应是否超过渲染上限。
+ * 使用后端返回的字节数判断，避免为了比较大小而提前解码超大响应。
+ */
+const bodyTooLarge = computed(() => {
+  const res = response.value
+  if (!res) return false
+  const limit = renderLimitBytes.value
+  if (limit <= 0) return false
+  return res.sizeBytes > limit
+})
+
+/**
+ * 格式化结果按响应对象缓存。
+ * 大响应格式化耗时较长，缓存后可避免切换请求标签时反复格式化。
+ */
+const formattedBodyCache = new WeakMap<object, string>()
+
+const formattedBody = computed(() => {
+  const res = response.value
+  if (!res || bodyTooLarge.value) return ''
+  const cached = formattedBodyCache.get(res)
+  if (cached !== undefined) return cached
+  const text = rawBodyText.value
+  if (!text) return ''
+  let formatted = text
+  if (res.contentType?.includes('application/json')) {
+    // 使用流式格式化，避免 JSON.parse/stringify 在数 MB 响应上生成庞大的中间对象图
+    formatted = prettyPrintJson(text, 2) ?? text
+  }
+  formattedBodyCache.set(res, formatted)
+  return formatted
+})
+
+/** 当前可用的响应文本：超限时回退为未美化的原始文本 */
+function availableBodyText(): string {
+  return bodyTooLarge.value ? rawBodyText.value : formattedBody.value
+}
 
 const bodyLanguage = computed(() => {
   if (!response.value) return 'text'
@@ -160,9 +202,10 @@ function headerEntries(): [string, string][] {
 }
 
 async function copyResponseBody() {
-  if (!formattedBody.value) return
+  const text = availableBodyText()
+  if (!text) return
   try {
-    await navigator.clipboard.writeText(formattedBody.value)
+    await navigator.clipboard.writeText(text)
     ElMessage.success('响应内容已复制到剪贴板')
   } catch (err) {
     ElMessage.error(`复制失败: ${err}`)
@@ -170,18 +213,20 @@ async function copyResponseBody() {
 }
 
 async function downloadResponseBody() {
-  if (!response.value || !formattedBody.value) {
+  const res = response.value
+  const text = availableBodyText()
+  if (!res || !text) {
     ElMessage.warning('没有可下载的响应内容')
     return
   }
-  const headers = response.value.headers || {}
+  const headers = res.headers || {}
   let filename = parseFilenameFromHeaders(headers)
   if (!filename) {
-    const ext = getExtensionFromContentType(response.value.contentType || '')
+    const ext = getExtensionFromContentType(res.contentType || '')
     filename = generateRandomFilename(ext)
   }
   try {
-    const savedPath = await api.saveResponseBody(formattedBody.value, filename)
+    const savedPath = await api.saveResponseBody(text, filename)
     if (savedPath) {
       ElMessage.success(`已保存到 ${savedPath}`)
     }
@@ -235,7 +280,21 @@ async function downloadResponseBody() {
       </div>
       <el-tabs v-model="activeTab" class="response-tabs">
         <el-tab-pane label="响应内容" name="body">
-          <div v-if="response && formattedBody" class="response-body-wrap">
+          <div v-if="response && bodyTooLarge" class="response-body-limit">
+            <el-icon class="limit-icon"><WarningFilled /></el-icon>
+            <div class="limit-title">响应大小超过渲染上限，请下载响应内容进行浏览</div>
+            <div class="limit-desc">
+              当前响应 {{ formatBytes(response.sizeBytes) }}，渲染上限 {{ formatBytes(renderLimitBytes) }}
+            </div>
+            <div class="limit-actions">
+              <el-button type="primary" @click="downloadResponseBody">
+                <el-icon><Download /></el-icon>
+                <span>下载响应内容</span>
+              </el-button>
+              <el-button text @click="copyResponseBody">复制响应内容</el-button>
+            </div>
+          </div>
+          <div v-else-if="response && formattedBody" class="response-body-wrap">
             <div class="response-body-toolbar">
               <el-tooltip content="搜索" placement="top">
                 <el-button size="small" text @click="toggleSearch">
@@ -406,6 +465,44 @@ async function downloadResponseBody() {
 .response-body-content {
   flex: 1;
   min-height: 0;
+}
+
+/* 响应体超过渲染上限时的提示区域 */
+.response-body-limit {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--app-border);
+  border-radius: 6px;
+  background-color: var(--app-bg-secondary);
+}
+
+.limit-icon {
+  font-size: 34px;
+  color: var(--app-warning, #e6a23c);
+}
+
+.limit-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.limit-desc {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+}
+
+.limit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .kv-table {

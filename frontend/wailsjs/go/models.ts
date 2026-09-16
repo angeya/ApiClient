@@ -387,6 +387,7 @@ export namespace models {
 	    version: string;
 	    theme: string;
 	    requestTimeoutMs: number;
+	    responseRenderLimitBytes: number;
 	    globalHeaders: Header[];
 	    globalVariables: Variable[];
 	
@@ -399,6 +400,7 @@ export namespace models {
 	        this.version = source["version"];
 	        this.theme = source["theme"];
 	        this.requestTimeoutMs = source["requestTimeoutMs"];
+	        this.responseRenderLimitBytes = source["responseRenderLimitBytes"];
 	        this.globalHeaders = this.convertValues(source["globalHeaders"], Header);
 	        this.globalVariables = this.convertValues(source["globalVariables"], Variable);
 	    }
