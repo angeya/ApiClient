@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { useWorkspaceStore } from '../stores/workspace'
 import KeyValueEditor from './common/KeyValueEditor.vue'
 

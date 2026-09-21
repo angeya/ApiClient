@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { useResizableColumns } from '../../composables/useResizableColumns'
 import { api } from '../../services/api'
 import type { FormField } from '../../types'

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
+import { ElMessageBox } from 'element-plus/es/components/message-box/index'
+import { ElNotification } from 'element-plus/es/components/notification/index'
 import { EventsOn, Quit } from '../../wailsjs/runtime/runtime'
 import TitleBar from '../components/TitleBar.vue'
 import Sidebar from '../components/Sidebar.vue'

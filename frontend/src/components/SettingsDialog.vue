@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
+import { ElMessageBox } from 'element-plus/es/components/message-box/index'
 import { useWorkspaceStore } from '../stores/workspace'
 import { useThemeStore, type Theme } from '../stores/theme'
 import { api } from '../services/api'

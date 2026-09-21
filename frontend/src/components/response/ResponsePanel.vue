@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { useWorkspaceStore } from '../../stores/workspace'
 import type { HttpResponse } from '../../services/api'
 import { api, responseBodyToString } from '../../services/api'

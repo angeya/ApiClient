@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { api } from '../services/api'
 import type { DirMeta } from '../types'
 import KeyValueEditor from './common/KeyValueEditor.vue'

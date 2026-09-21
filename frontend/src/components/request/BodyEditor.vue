@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import type { Request } from '../../types'
 import FormDataEditor from './FormDataEditor.vue'
 import CodeEditor from '../common/CodeEditor.vue'

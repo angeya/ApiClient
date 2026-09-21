@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, nextTick, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
+import { ElMessageBox } from 'element-plus/es/components/message-box/index'
 import { Search } from '@element-plus/icons-vue'
 import type { ApiNode } from '../types'
 import { useWorkspaceStore } from '../stores/workspace'

@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { useWorkspaceStore } from '../stores/workspace'
 import VariablesDrawer from './VariablesDrawer.vue'
 import SettingsDialog from './SettingsDialog.vue'
 import SwaggerImportDialog from './SwaggerImportDialog.vue'
+import GenerateCodeDialog from './GenerateCodeDialog.vue'
 
 const workspace = useWorkspaceStore()
 
 const varsDrawerVisible = ref(false)
 const settingsVisible = ref(false)
 const importVisible = ref(false)
+const codeVisible = ref(false)
 
 function openImport() {
   if (!workspace.root) {
@@ -18,6 +20,14 @@ function openImport() {
     return
   }
   importVisible.value = true
+}
+
+function openCode() {
+  if (!workspace.activeDraft) {
+    ElMessage.warning('请先选择一个请求')
+    return
+  }
+  codeVisible.value = true
 }
 </script>
 
@@ -33,11 +43,15 @@ function openImport() {
       <button class="tool-btn" title="导入接口" @click="openImport">
         <el-icon :size="18"><Upload /></el-icon>
       </button>
+      <button class="tool-btn" title="生成代码" @click="openCode">
+        <el-icon :size="18"><Cpu /></el-icon>
+      </button>
     </div>
 
     <VariablesDrawer v-model="varsDrawerVisible" />
     <SettingsDialog v-model="settingsVisible" />
     <SwaggerImportDialog v-model="importVisible" />
+    <GenerateCodeDialog v-model="codeVisible" />
   </div>
 </template>
 

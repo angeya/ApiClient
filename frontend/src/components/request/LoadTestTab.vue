@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { EventsOn, EventsOff } from '../../../wailsjs/runtime/runtime'
 import { api } from '../../services/api'
 import { useWorkspaceStore } from '../../stores/workspace'

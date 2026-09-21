@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index'
 import { useWorkspaceStore } from '../stores/workspace'
 import { parseSwagger30, importSwaggerItems } from '../utils/swagger-import'
 import type { SwaggerImportResult, ImportItem } from '../utils/swagger-import'
