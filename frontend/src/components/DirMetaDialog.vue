@@ -57,7 +57,7 @@ watch(visible, (v) => emit('update:modelValue', v))
 </script>
 
 <template>
-  <el-dialog v-model="visible" title="目录设置" width="640px">
+  <el-dialog v-model="visible" title="目录设置" width="640px" class="app-dialog-center">
     <div v-if="loading" class="loading-text">加载中...</div>
     <div v-else class="dir-meta-form">
       <el-tabs type="border-card">

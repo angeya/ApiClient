@@ -9,5 +9,12 @@
   "author": {
     "name": "5790",
     "email": "wangaj@sciyon.com"
+  },
+  "info": {
+    "companyName": "ApiClient",
+    "productName": "ApiClient",
+    "productVersion": "0.0.2.0",
+    "copyright": "Copyright 2026",
+    "comments": "ApiClient - 本地 API 调试工具"
   }
 }

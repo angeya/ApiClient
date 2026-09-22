@@ -145,6 +145,7 @@ function closeResult() {
       v-model="visible"
       title="导入接口"
       width="480px"
+      class="app-dialog-center"
       :close-on-click-modal="step !== 'importing'"
       :close-on-press-escape="step !== 'importing'"
       :show-close="step !== 'importing'"

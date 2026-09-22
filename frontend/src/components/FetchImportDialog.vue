@@ -88,7 +88,7 @@ function guessBodyType(body: string): 'none' | 'json' | 'text' {
 </script>
 
 <template>
-  <el-dialog v-model="visible" title="从 Fetch API 导入" width="680px">
+  <el-dialog v-model="visible" title="从 Fetch API 导入" width="680px" class="app-dialog-center">
     <el-input
       v-model="code"
       type="textarea"

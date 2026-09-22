@@ -177,7 +177,7 @@ onMounted(async () => {
       <RightToolbar class="right-toolbar" />
     </div>
     <FetchImportDialog v-model="fetchVisible" :initial-code="fetchCode" />
-    <span class="version-badge">v0.0.1</span>
+    <span class="version-badge">v0.0.2</span>
   </div>
 </template>
 

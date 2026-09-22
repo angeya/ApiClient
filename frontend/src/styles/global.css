@@ -109,6 +109,16 @@ body,
   height: 100%;
 }
 
+/* 弹窗垂直居中：当前版本的 el-dialog 未提供 align-center，用定位实现。
+   动画作用在父层 .el-overlay-dialog 上，不会与此处的 transform 冲突。 */
+.app-dialog-center.el-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
 /* Element Plus overrides */
 .el-tree {
   background-color: transparent !important;

@@ -156,6 +156,7 @@ function close() {
     :model-value="modelValue"
     title="设置"
     width="560px"
+    class="app-dialog-center"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
     @close="close"
@@ -220,7 +221,7 @@ function close() {
     width="540px"
     :close-on-click-modal="false"
     :show-close="false"
-    class="migration-dialog"
+    class="migration-dialog app-dialog-center"
   >
     <div v-if="migrationResult" class="migration-result">
       <div :class="['migration-header', migrationResult.failedFiles > 0 ? 'is-warning' : 'is-success']">

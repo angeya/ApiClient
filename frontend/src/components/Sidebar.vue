@@ -434,7 +434,7 @@ function renderMenu(node: ApiNode) {
       </el-icon>
     </div>
 
-    <el-dialog v-model="createDialogVisible" title="新建" width="360px">
+    <el-dialog v-model="createDialogVisible" title="新建" width="360px" class="app-dialog-center">
       <el-input v-model="newName" placeholder="请输入名称" @keyup.enter="confirmCreate" />
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>

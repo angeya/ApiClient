@@ -20,6 +20,17 @@ function toggleSearch() {
   codeEditorRef.value?.openSearch()
 }
 
+/**
+ * 焦点在响应内容区域时，Ctrl/Cmd + F 快捷唤起搜索。
+ * 只在该区域获得焦点时生效，避免抢占地址栏等其他输入框的快捷键。
+ */
+function onBodyKeydown(e: KeyboardEvent) {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'f') return
+  e.preventDefault()
+  e.stopPropagation()
+  toggleSearch()
+}
+
 interface ScriptResult {
   success: boolean
   error?: string
@@ -294,9 +305,14 @@ async function downloadResponseBody() {
               <el-button text @click="copyResponseBody">复制响应内容</el-button>
             </div>
           </div>
-          <div v-else-if="response && formattedBody" class="response-body-wrap">
+          <div
+            v-else-if="response && formattedBody"
+            class="response-body-wrap"
+            tabindex="0"
+            @keydown="onBodyKeydown"
+          >
             <div class="response-body-toolbar">
-              <el-tooltip content="搜索" placement="top">
+              <el-tooltip content="搜索 (Ctrl+F)" placement="top">
                 <el-button size="small" text @click="toggleSearch">
                   <el-icon><Search /></el-icon>
                 </el-button>
