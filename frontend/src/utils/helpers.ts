@@ -3,6 +3,22 @@ import type { Header, QueryParam, Variable, Request } from '../types'
 /** 请求默认超时时间（毫秒） */
 export const DEFAULT_REQUEST_TIMEOUT_MS = 30000
 
+/**
+ * 补全请求 URL 的协议前缀。
+ * HTTP 请求缺省补 http://，WebSocket 依据方法补 ws:// 或 wss://；
+ * 已带协议的 URL 原样返回，便于调用方判断是否需要回填。
+ */
+export function normalizeUrl(url: string, type: string, method: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return trimmed
+  if (type === 'websocket') {
+    if (/^wss?:\/\//i.test(trimmed)) return trimmed
+    return (method === 'WSS' ? 'wss://' : 'ws://') + trimmed
+  }
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return 'http://' + trimmed
+}
+
 /** 响应内容默认渲染上限（字节），默认 10MB */
 export const DEFAULT_RESPONSE_RENDER_LIMIT_BYTES = 10 * 1024 * 1024
 

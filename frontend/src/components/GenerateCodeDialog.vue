@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus/es/components/message/index'
 import { useWorkspaceStore } from '../stores/workspace'
 import { api } from '../services/api'
 import { CURL_FLAVORS, generateCurl, getCurlWarning, type CurlFlavor } from '../utils/codegen'
+import { normalizeUrl } from '../utils/helpers'
 import type { models } from '../../wailsjs/go/models'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -59,6 +60,8 @@ async function loadPreview() {
   try {
     // 深拷贝后再交给后端，避免解析过程影响编辑中的草稿
     const req = JSON.parse(JSON.stringify(draft))
+    // 与实际发送保持一致，未写协议时补上，保证生成的命令地址可用
+    req.url = normalizeUrl(req.url, req.type, req.method)
     preview.value = await api.previewRequest(req, currentDirRel(tab.rel))
   } catch (err) {
     errorMessage.value = `解析请求失败: ${err}`
@@ -97,6 +100,8 @@ watch(
     :model-value="modelValue"
     title="生成代码"
     width="720px"
+    top="8vh"
+    class="gen-code-dialog"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
     @close="close"
@@ -162,14 +167,38 @@ watch(
   margin-left: 4px;
 }
 
+/* 让弹窗整体占满可用高度，代码区再吃掉剩余空间 */
+.gen-code-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 78vh;
+}
+
+.gen-code-dialog :deep(.el-dialog__header),
+.gen-code-dialog :deep(.el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+.gen-code-dialog :deep(.el-dialog__body) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
 .code-area {
-  min-height: 300px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .code-block {
+  flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 12px;
-  max-height: 520px;
   overflow: auto;
   border: 1px solid var(--app-border);
   border-radius: 4px;
@@ -184,10 +213,10 @@ watch(
 }
 
 .code-empty {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
   font-size: 13px;
   color: var(--app-text-secondary);
 }

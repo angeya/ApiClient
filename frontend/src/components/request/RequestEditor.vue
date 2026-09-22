@@ -9,6 +9,7 @@ import ScriptEditor from './ScriptEditor.vue'
 import LoadTestTab from './LoadTestTab.vue'
 import WebSocketTab from './WebSocketTab.vue'
 import type { models } from '../../../wailsjs/go/models'
+import { normalizeUrl } from '../../utils/helpers'
 import type { QueryParam, DirMeta, Header } from '../../types'
 
 const workspace = useWorkspaceStore()
@@ -129,17 +130,6 @@ const bodyCount = computed(() => {
 const hasPreScript = computed(() => !!draft.value?.preRequestScript?.trim())
 const hasPostScript = computed(() => !!draft.value?.postResponseScript?.trim())
 
-function normalizeUrl(url: string, type: string, method: string): string {
-  const trimmed = url.trim()
-  if (!trimmed) return trimmed
-  if (type === 'websocket') {
-    if (/^wss?:\/\//i.test(trimmed)) return trimmed
-    return (method === 'WSS' ? 'wss://' : 'ws://') + trimmed
-  }
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  return 'http://' + trimmed
-}
-
 function parseUrlQueries(url: string): QueryParam[] {
   const list: QueryParam[] = []
   try {
@@ -203,16 +193,40 @@ function buildUrlWithQueries(url: string, queries: QueryParam[]): string {
   }
 }
 
+/**
+ * 把自动补全后的协议写回请求并落盘。
+ * 仅当用户在请求期间没有改动过地址时才回填，避免覆盖手动修改。
+ */
+async function backfillUrlScheme(rel: string, rawUrl: string, fullUrl: string) {
+  const current = workspace.drafts.get(rel)
+  if (!current || (current.url || '').trim() !== rawUrl) return
+  // 直接替换草稿，不走 updateDraft，避免闪现“未保存”标记
+  workspace.drafts.set(rel, { ...current, url: fullUrl })
+  try {
+    await workspace.saveRequest(rel)
+  } catch (err) {
+    ElMessage.error(`补全协议后保存失败: ${err}`)
+  }
+}
+
 async function send() {
   const tab = workspace.activeTab
   const req = plainDraft()
   if (!tab || !req) return
-  req.url = normalizeUrl(req.url, req.type, req.method)
+  const rawUrl = (req.url || '').trim()
+  const hadScheme = /^https?:\/\//i.test(rawUrl)
+  req.url = normalizeUrl(rawUrl, req.type, req.method)
+  // 本次是自动补上协议的，请求成功后需要回填保存
+  const schemeFilled = !hadScheme && req.url !== rawUrl
   workspace.startSendingTimer(req.id)
   try {
     const dirRel = currentDirRel(tab.rel)
     const resp = await api.sendHttpRequest(req, dirRel)
     window.dispatchEvent(new CustomEvent('api-response', { detail: resp }))
+    // 请求成功（2xx）才回填，失败说明补全的协议可能不对，保持原样
+    if (schemeFilled && resp.statusCode >= 200 && resp.statusCode < 300) {
+      await backfillUrlScheme(tab.rel, rawUrl, req.url)
+    }
   } catch (err) {
     ElMessage.error(`请求失败: ${err}`)
   } finally {
@@ -304,6 +318,8 @@ async function loadPreview() {
   const tab = workspace.activeTab
   const req = plainDraft()
   if (!tab || !req) return
+  // 与实际发送保持一致，未写协议时补上，避免预览/生成代码里的地址不完整
+  req.url = normalizeUrl(req.url, req.type, req.method)
   previewLoading.value = true
   preview.value = null
   try {
@@ -323,16 +339,38 @@ watch(() => workspace.activeDraft, () => {
   if (editorTab.value === 'preview') loadPreview()
 })
 
-watch(() => workspace.activeTab?.rel, () => {
+/**
+ * 记录每个请求上次停留的板块，切回该请求时恢复，
+ * 新打开的请求没有记录，回落到默认的 Query 板块。
+ */
+const editorTabByRel = ref<Map<string, string>>(new Map())
+
+/** 清理已关闭请求留下的记录，避免重开时错误恢复 */
+function pruneEditorTabs() {
+  const opened = new Set(workspace.tabs.map((t) => t.rel))
+  for (const rel of Array.from(editorTabByRel.value.keys())) {
+    if (!opened.has(rel)) editorTabByRel.value.delete(rel)
+  }
+}
+
+watch(() => workspace.activeTab?.rel, (rel) => {
+  if (!rel) return
   // 切换标签页时抑制一次 URL/Query 自动同步，避免初始加载误标记 dirty
   suppressInitialSync = true
   nextTick(() => {
     suppressInitialSync = false
   })
-  // 每次打开接口时默认展示 Query 标签页
-  editorTab.value = 'params'
+  pruneEditorTabs()
+  editorTab.value = editorTabByRel.value.get(rel) || 'params'
   loadDirMeta()
 }, { immediate: true })
+
+// 记住当前请求停留的板块
+watch(editorTab, (tab) => {
+  const rel = workspace.activeTab?.rel
+  if (!rel) return
+  editorTabByRel.value.set(rel, tab)
+})
 
 // URL 变化时同步到 Query 表格
 watch(
