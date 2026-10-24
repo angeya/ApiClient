@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
+import { ref, nextTick, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus/es/components/message/index'
 import { ElMessageBox } from 'element-plus/es/components/message-box/index'
 import { Search } from '@element-plus/icons-vue'
@@ -320,19 +320,64 @@ function filterNodes(nodes: ApiNode[], query: string): ApiNode[] {
 }
 
 function renderMenu(node: ApiNode) {
-  const common = [
+  if (node.type === 'request') {
+    return [
+      { label: '克隆', command: () => cloneNode(node) },
+      { label: '重命名', command: () => renameNode(node) },
+      { label: '删除', command: () => removeNode(node) },
+    ]
+  }
+  return [
     { label: '新建目录', command: () => showCreate(node.path, 'dir') },
     { label: '新建 HTTP 请求', command: () => showCreate(node.path, 'http') },
     { label: '新建 WebSocket', command: () => showCreate(node.path, 'websocket') },
-    { label: '克隆', command: () => cloneNode(node) },
+    { label: '目录设置', command: () => openDirMeta(node) },
     { label: '重命名', command: () => renameNode(node) },
     { label: '删除', command: () => removeNode(node) },
   ]
-  if (node.type === 'dir') {
-    common.splice(3, 0, { label: '目录设置', command: () => openDirMeta(node) })
-  }
-  return common
 }
+
+// 树节点右键上下文菜单
+const ctxMenuVisible = ref(false)
+const ctxMenuX = ref(0)
+const ctxMenuY = ref(0)
+const ctxMenuNode = ref<ApiNode | null>(null)
+
+const ctxMenuItems = computed(() => {
+  return ctxMenuNode.value ? renderMenu(ctxMenuNode.value) : []
+})
+
+function onNodeContextmenu(e: MouseEvent, data: ApiNode) {
+  e.preventDefault()
+  ctxMenuNode.value = data
+  ctxMenuX.value = e.clientX
+  ctxMenuY.value = e.clientY
+  ctxMenuVisible.value = true
+  // 右键时同步高亮该节点，保持视觉一致
+  treeRef.value?.setCurrentKey(data.id)
+}
+
+function hideContextMenu() {
+  ctxMenuVisible.value = false
+  ctxMenuNode.value = null
+}
+
+function runCtxCommand(command: () => void) {
+  hideContextMenu()
+  command()
+}
+
+function onDocumentClick() {
+  hideContextMenu()
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
 
 </script>
 
@@ -396,6 +441,7 @@ function renderMenu(node: ApiNode) {
       @node-drop="onNodeDrop"
       @node-expand="onNodeExpand"
       @node-collapse="onNodeCollapse"
+      @node-contextmenu="onNodeContextmenu"
     >
       <template #default="{ node, data }">
         <span class="tree-node">
@@ -444,6 +490,23 @@ function renderMenu(node: ApiNode) {
 
     <FetchImportDialog v-model="fetchDialogVisible" />
     <DirMetaDialog v-model="dirMetaVisible" :rel="dirMetaRel" />
+
+    <div
+      v-if="ctxMenuVisible"
+      class="node-context-menu"
+      :style="{ left: ctxMenuX + 'px', top: ctxMenuY + 'px' }"
+      @click.stop
+      @contextmenu.prevent
+    >
+      <div
+        v-for="(item, idx) in ctxMenuItems"
+        :key="idx"
+        class="node-context-item"
+        @click="runCtxCommand(item.command)"
+      >
+        {{ item.label }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -639,6 +702,30 @@ function renderMenu(node: ApiNode) {
     color: #fff;
     box-shadow: inset 0 0 0 1.5px var(--app-accent);
   }
+}
+
+.node-context-menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 120px;
+  padding: 4px 0;
+  background-color: var(--app-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+}
+
+.node-context-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--app-text);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.node-context-item:hover {
+  background-color: var(--app-bg-tertiary);
+  color: var(--app-accent);
 }
 
 .workspace-info {

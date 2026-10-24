@@ -8,6 +8,7 @@ export namespace models {
 	    requestType?: string;
 	    path: string;
 	    url?: string;
+	    createdAt?: number;
 	    children?: ApiNode[];
 	
 	    static createFrom(source: any = {}) {
@@ -23,6 +24,7 @@ export namespace models {
 	        this.requestType = source["requestType"];
 	        this.path = source["path"];
 	        this.url = source["url"];
+	        this.createdAt = source["createdAt"];
 	        this.children = this.convertValues(source["children"], ApiNode);
 	    }
 	
@@ -299,6 +301,7 @@ export namespace models {
 	    postResponseScript: string;
 	    description: string;
 	    disabledInheritedHeaderKeys: string[];
+	    createdAt?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Request(source);
@@ -320,6 +323,7 @@ export namespace models {
 	        this.postResponseScript = source["postResponseScript"];
 	        this.description = source["description"];
 	        this.disabledInheritedHeaderKeys = source["disabledInheritedHeaderKeys"];
+	        this.createdAt = source["createdAt"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -390,6 +394,7 @@ export namespace models {
 	    responseRenderLimitBytes: number;
 	    globalHeaders: Header[];
 	    globalVariables: Variable[];
+	    autoRenameOnSave: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -403,6 +408,7 @@ export namespace models {
 	        this.responseRenderLimitBytes = source["responseRenderLimitBytes"];
 	        this.globalHeaders = this.convertValues(source["globalHeaders"], Header);
 	        this.globalVariables = this.convertValues(source["globalVariables"], Variable);
+	        this.autoRenameOnSave = source["autoRenameOnSave"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

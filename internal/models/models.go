@@ -49,6 +49,8 @@ type Request struct {
 	PostResponseScript          string       `json:"postResponseScript"`
 	Description                 string       `json:"description"`
 	DisabledInheritedHeaderKeys []string     `json:"disabledInheritedHeaderKeys"`
+	// CreatedAt 创建时间（毫秒时间戳），用于列表排序，使新增接口默认排在最后。
+	CreatedAt int64 `json:"createdAt,omitempty"`
 }
 
 // DirMeta represents directory-level metadata.
@@ -69,6 +71,8 @@ type Settings struct {
 	ResponseRenderLimitBytes int64      `json:"responseRenderLimitBytes"`
 	GlobalHeaders            []Header   `json:"globalHeaders"`
 	GlobalVariables          []Variable `json:"globalVariables"`
+	// AutoRenameOnSave 保存时是否自动命名：名称包含“未命名”的接口按 URL 路径最后一段重命名。
+	AutoRenameOnSave bool `json:"autoRenameOnSave"`
 }
 
 // WorkspaceInitData bundles workspace root, settings, and tree for one-shot startup loading.
@@ -132,6 +136,7 @@ type ApiNode struct {
 	RequestType string    `json:"requestType,omitempty"`
 	Path        string    `json:"path"`
 	URL         string    `json:"url,omitempty"`
+	CreatedAt   int64     `json:"createdAt,omitempty"`
 	Children    []ApiNode `json:"children,omitempty"`
 }
 

@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import type { WorkspaceInitData } from '../services/api'
 import {
   normalizeRequest,
+  cleanupRequestForSave,
   DEFAULT_REQUEST_TIMEOUT_MS,
   DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
 } from '../utils/helpers'
@@ -18,6 +19,8 @@ function normalizeSettings(s: Settings): Settings {
       s.responseRenderLimitBytes > 0 ? s.responseRenderLimitBytes : DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
     globalHeaders: s.globalHeaders || [],
     globalVariables: s.globalVariables || [],
+    // 兼容旧版 settings.json：字段缺失时默认开启保存时自动命名
+    autoRenameOnSave: s.autoRenameOnSave !== false,
   }
 }
 
@@ -31,6 +34,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     responseRenderLimitBytes: DEFAULT_RESPONSE_RENDER_LIMIT_BYTES,
     globalHeaders: [],
     globalVariables: [],
+    autoRenameOnSave: true,
   })
   const tabs = ref<RequestTab[]>([])
   const activeTabId = ref('')
@@ -130,7 +134,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   async function cloneRequest(rel: string, newName: string) {
     const newRel = await api.cloneRequest(rel, newName)
     await reloadTree()
-    await loadRequest(newRel, false)
+    // 克隆后自动打开克隆出的接口
+    await loadRequest(newRel)
   }
 
   function updateDraft(rel: string, patch: Partial<Request>) {
@@ -151,13 +156,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   async function saveRequest(rel: string) {
-    const req = drafts.value.get(rel)
-    if (!req) return
+    const current = drafts.value.get(rel)
+    if (!current) return
+    // 保存前清理：自动命名 + 删除全空参数行
+    const req = cleanupRequestForSave(current, settings.value.autoRenameOnSave)
+    drafts.value.set(rel, req)
     await api.saveRequest(rel, req as any)
     dirtyMap.value.set(rel, false)
     const idx = tabs.value.findIndex((t) => t.rel === rel)
     if (idx !== -1) {
-      tabs.value[idx] = { ...tabs.value[idx], dirty: false }
+      tabs.value[idx] = { ...tabs.value[idx], dirty: false, name: req.name || tabs.value[idx].name }
     }
     await reloadTree()
   }

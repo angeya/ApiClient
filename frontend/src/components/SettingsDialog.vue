@@ -201,6 +201,16 @@ function close() {
         </el-tooltip>
       </el-form-item>
 
+      <el-form-item label="自动命名">
+        <el-switch v-model="form.autoRenameOnSave" />
+        <el-tooltip
+          content="开启后，保存接口时若名称包含“未命名”（含“未命名 副本”），将按接口 URL 路径最后一段自动重命名"
+          placement="top"
+        >
+          <el-icon class="hint-icon"><QuestionFilled /></el-icon>
+        </el-tooltip>
+      </el-form-item>
+
       <el-form-item label="工作区">
         <div class="workspace-row">
           <el-input v-model="workspacePath" readonly />

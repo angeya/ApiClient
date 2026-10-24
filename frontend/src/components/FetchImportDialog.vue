@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus/es/components/message/index'
 import { api } from '../services/api'
 import { useWorkspaceStore } from '../stores/workspace'
+import { guessNameFromUrl } from '../utils/helpers'
 
 const props = defineProps<{ modelValue: boolean; initialCode?: string }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
@@ -22,18 +23,8 @@ watch(visible, (v) => {
   }
 })
 
-function guessNameFromUrl(url: string): string {
-  try {
-    const u = new URL(url)
-    const segments = u.pathname.split('/').filter(Boolean)
-    if (segments.length > 0) {
-      return segments[segments.length - 1]
-    }
-    return u.hostname || '未命名'
-  } catch {
-    const segments = url.split('/').filter(Boolean)
-    return segments.length > 0 ? segments[segments.length - 1] : '未命名'
-  }
+function guessNameFromUrlLocal(url: string): string {
+  return guessNameFromUrl(url) || '未命名'
 }
 
 async function parse() {
@@ -41,7 +32,7 @@ async function parse() {
   loading.value = true
   try {
     const result = await api.parseFetch(code.value)
-    const name = guessNameFromUrl(result.url)
+    const name = guessNameFromUrlLocal(result.url)
     const headers = Object.entries(result.headers || {}).map(([key, value]) => ({
       key,
       value,

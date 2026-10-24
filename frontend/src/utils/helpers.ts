@@ -156,6 +156,60 @@ export function safeFormatJson(input: string, indentSize = 2): string {
   return prettyPrintJson(input, indentSize) ?? input
 }
 
+/**
+ * 从 URL 推断接口名称：取路径最后一段，无路径段时取主机名。
+ * 与 Fetch 导入的命名逻辑保持一致；无法推断时返回空字符串，由调用方决定回退值。
+ */
+export function guessNameFromUrl(url: string): string {
+  const trimmed = (url || '').trim()
+  if (!trimmed) return ''
+  try {
+    const u = new URL(trimmed)
+    const segments = u.pathname.split('/').filter(Boolean)
+    if (segments.length > 0) {
+      return segments[segments.length - 1]
+    }
+    return u.hostname || ''
+  } catch {
+    const segments = trimmed.split('/').filter(Boolean)
+    return segments.length > 0 ? segments[segments.length - 1] : ''
+  }
+}
+
+/** 判断一行参数是否全空：参数名、参数值、描述均为空 */
+function isRowEmpty(row: { key?: string; value?: string; description?: string }): boolean {
+  return (
+    !(row.key || '').trim() &&
+    !(row.value || '').trim() &&
+    !(row.description || '').trim()
+  )
+}
+
+/**
+ * 保存前的请求清理：
+ * 1. 自动命名：名称包含“未命名”（含“未命名 副本”）时按 URL 路径最后一段重命名；
+ * 2. 删除参数名、参数值、描述三项全空的 Headers / Query / Form 行。
+ */
+export function cleanupRequestForSave(req: Request, autoRename: boolean): Request {
+  const next = { ...req }
+  if (autoRename && (next.name || '').includes('未命名')) {
+    const derived = guessNameFromUrl(next.url)
+    if (derived) {
+      next.name = derived
+    }
+  }
+  if (Array.isArray(next.headers)) {
+    next.headers = next.headers.filter((r) => !isRowEmpty(r))
+  }
+  if (Array.isArray(next.query)) {
+    next.query = next.query.filter((r) => !isRowEmpty(r))
+  }
+  if (Array.isArray(next.formData)) {
+    next.formData = next.formData.filter((r) => !isRowEmpty(r))
+  }
+  return next
+}
+
 export function normalizeRequest(req: any): Request {
   if (!req) return req
   const normalizeRows = (rows: any[]) => (rows || []).map((r: any) => ({

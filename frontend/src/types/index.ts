@@ -60,6 +60,8 @@ export interface Settings {
   responseRenderLimitBytes: number
   globalHeaders: Header[]
   globalVariables: Variable[]
+  /** 保存时自动命名：名称包含“未命名”的接口按 URL 路径最后一段重命名 */
+  autoRenameOnSave: boolean
 }
 
 export interface WorkspaceMigrationResult {

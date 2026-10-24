@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"ApiClient/internal/models"
 
@@ -55,6 +56,7 @@ func (m *Manager) EnsureWorkspace() error {
 			ResponseRenderLimitBytes: DefaultResponseRenderLimitBytes,
 			GlobalHeaders:            []models.Header{},
 			GlobalVariables:          []models.Variable{},
+			AutoRenameOnSave:         true,
 		}
 		if err := m.SaveSettings(settings); err != nil {
 			return err
@@ -84,6 +86,13 @@ func (m *Manager) LoadSettings() (models.Settings, error) {
 	if s.ResponseRenderLimitBytes <= 0 {
 		s.ResponseRenderLimitBytes = DefaultResponseRenderLimitBytes
 	}
+	// 兼容旧版 settings.json：字段缺失时默认开启保存时自动命名
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err == nil {
+		if _, ok := raw["autoRenameOnSave"]; !ok {
+			s.AutoRenameOnSave = true
+		}
+	}
 	return s, nil
 }
 
@@ -96,6 +105,7 @@ func defaultSettings() models.Settings {
 		ResponseRenderLimitBytes: DefaultResponseRenderLimitBytes,
 		GlobalHeaders:            []models.Header{},
 		GlobalVariables:          []models.Variable{},
+		AutoRenameOnSave:         true,
 	}
 }
 
@@ -179,6 +189,7 @@ func (m *Manager) loadTreeDir(dir string, rel string) ([]models.ApiNode, error) 
 					RequestType: req.Type,
 					Path:        e.childRel,
 					URL:         req.URL,
+					CreatedAt:   req.CreatedAt,
 				}
 			}
 		}(i, ve)
@@ -192,6 +203,19 @@ func (m *Manager) loadTreeDir(dir string, rel string) ([]models.ApiNode, error) 
 			nodes = append(nodes, n)
 		}
 	}
+
+	// 排序：目录在前；请求按创建时间升序，新增接口默认排在最后；
+	// 创建时间相同（含旧数据无时间戳）时保持原有文件名顺序
+	sort.SliceStable(nodes, func(i, j int) bool {
+		aDir, bDir := nodes[i].Type == "dir", nodes[j].Type == "dir"
+		if aDir != bDir {
+			return aDir
+		}
+		if !aDir && nodes[i].CreatedAt != nodes[j].CreatedAt {
+			return nodes[i].CreatedAt < nodes[j].CreatedAt
+		}
+		return false
+	})
 	return nodes, nil
 }
 
@@ -237,6 +261,12 @@ func (m *Manager) LoadRequest(rel string) (models.Request, error) {
 // SaveRequest saves a request file.
 func (m *Manager) SaveRequest(rel string, req models.Request) error {
 	path := filepath.Join(m.root, rel)
+	// 前端保存不携带创建时间，保留文件中已有的值，避免排序信息丢失
+	if req.CreatedAt == 0 {
+		if old, err := m.LoadRequest(rel); err == nil {
+			req.CreatedAt = old.CreatedAt
+		}
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
@@ -284,12 +314,13 @@ func (m *Manager) CreateRequest(parentRel string, name string, reqType string) (
 		method = "WS"
 	}
 	req := models.Request{
-		ID:       id,
-		Type:     reqType,
-		Name:     name,
-		Method:   method,
-		URL:      "",
-		BodyType: "none",
+		ID:        id,
+		Type:      reqType,
+		Name:      name,
+		Method:    method,
+		URL:       "",
+		BodyType:  "none",
+		CreatedAt: time.Now().UnixMilli(),
 	}
 	if err := m.SaveRequest(rel, req); err != nil {
 		return "", err
@@ -313,6 +344,7 @@ func (m *Manager) CloneRequest(rel string, newName string) (string, error) {
 	}
 	req.ID = id
 	req.Name = newName
+	req.CreatedAt = time.Now().UnixMilli()
 	if err := m.SaveRequest(newRel, req); err != nil {
 		return "", err
 	}
@@ -388,6 +420,9 @@ func (m *Manager) ImportRequest(parentRel string, data []byte) (string, error) {
 	}
 	if req.Name == "" {
 		req.Name = "Imported Request"
+	}
+	if req.CreatedAt == 0 {
+		req.CreatedAt = time.Now().UnixMilli()
 	}
 	rel := filepath.Join(parentRel, safeFileName(req.Name)+".json")
 	path := filepath.Join(m.root, rel)
